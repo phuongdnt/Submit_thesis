@@ -25,9 +25,9 @@ from typing import Callable, List, Dict, Any
 import copy
 import yaml
 
-from ..agents.happo_agent import HAPPOAgent
-from ..envs.serial_env import SerialInventoryEnv
-from ..envs.network_env import NetworkInventoryEnv
+from agents.happo_agent import HAPPOAgent
+from envs.serial_env import SerialInventoryEnv
+from envs.network_env import NetworkInventoryEnv
 
 
 class MetaRLTrainer:

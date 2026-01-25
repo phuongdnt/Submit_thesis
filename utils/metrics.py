@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import List, Dict, Any
 import numpy as np
 
-from ..envs.reward_functions import bullwhip_effect
+from envs.reward_functions import bullwhip_effect
 
 
 def compute_episode_costs(reward_history: List[List[float]]) -> List[float]:

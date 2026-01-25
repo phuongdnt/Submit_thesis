@@ -20,8 +20,8 @@ from __future__ import annotations
 from typing import List, Optional
 import numpy as np
 
-from .ga_lotsizing import optimise_order
-from .dalsa_module import dalsa_optimize
+from lot_sizing.ga_lotsizing import optimise_order
+from lot_sizing.dalsa_module import dalsa_optimize
 
 
 class HybridPlanner:

@@ -22,8 +22,8 @@ from typing import Any, Callable, Dict
 import copy
 import torch
 
-from ..agents.happo_agent import HAPPOAgent
-from ..envs.serial_env import SerialInventoryEnv
+from agents.happo_agent import HAPPOAgent
+from envs.serial_env import SerialInventoryEnv
 
 
 def maml_train(

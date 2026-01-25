@@ -38,7 +38,7 @@ import random
 from typing import List, Tuple, Optional, Any
 from pathlib import Path
 
-from ..data_loader import load_eval_data, generate_training_demand
+from data_loader import load_eval_data, generate_training_demand
 
 
 class SerialInventoryEnv:

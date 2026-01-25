@@ -25,9 +25,9 @@ import torch
 import torch.nn as nn
 from torch.optim import Adam
 
-from .policy_networks import MLPActor
-from .centralized_critic import CentralizedCritic
-from .replay_buffer import ReplayBuffer
+from agents.policy_networks import MLPActor
+from agents.centralized_critic import CentralizedCritic
+from agents.replay_buffer import ReplayBuffer
 
 
 class HAPPOAgent:

@@ -60,8 +60,8 @@ from __future__ import annotations
 from typing import Dict, List, Optional, Tuple, Any
 import numpy as np
 
-from .base_env import BaseInventoryEnv
-from ..data_loader import generate_training_demand, load_eval_data
+from envs.base_env import BaseInventoryEnv
+from data_loader import generate_training_demand, load_eval_data
 
 
 class NetworkInventoryEnv(BaseInventoryEnv):

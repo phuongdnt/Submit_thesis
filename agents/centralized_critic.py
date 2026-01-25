@@ -19,7 +19,7 @@ from __future__ import annotations
 from typing import List
 import torch
 import torch.nn as nn
-from .policy_networks import MLPCritic
+from agents.policy_networks import MLPCritic
 
 
 class CentralizedCritic:

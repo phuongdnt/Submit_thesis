@@ -18,7 +18,7 @@ exact solvers as needed.
 from __future__ import annotations
 
 from typing import List
-from .ga_lotsizing import optimise_order
+from lot_sizing.ga_lotsizing import optimise_order
 
 
 def dalsa_optimize(
