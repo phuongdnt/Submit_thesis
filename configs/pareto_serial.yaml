@@ -1,0 +1,97 @@
+# =============================================================================
+# PARETO MULTI-OBJECTIVE CONFIGURATION - SERIAL TOPOLOGY
+# =============================================================================
+# This configuration enables multi-objective optimization by introducing
+# weight parameters that control the trade-off between cost minimization
+# and service level maximization.
+#
+# Weight interpretation:
+#   - cost_weight (α): Weight for cost minimization objective
+#   - service_weight (β): Weight for service level maximization objective  
+#   - Reward = -α * TotalCost + β * ServiceBonus
+#
+# 5 Pareto points will be generated:
+#   Point 1: α=1.0, β=0.0 (Pure cost minimization)
+#   Point 2: α=0.8, β=0.2
+#   Point 3: α=0.5, β=0.5 (Balanced)
+#   Point 4: α=0.2, β=0.8
+#   Point 5: α=0.0, β=1.0 (Pure service maximization)
+# =============================================================================
+
+env:
+  env_type: serial
+  level_num: 3
+  lead_time: 2
+  episode_len: 100
+  action_dim: 41
+  init_inventory: 20
+  init_outstanding: 10
+  holding_cost: [1.0, 1.0, 1.0]
+  backlog_cost: [5.0, 3.0, 2.0]
+  fixed_cost: 1.0
+  price_discount: false
+  eval_data_dir: "test_data/test_demand_merton"
+  
+  # Multi-objective parameters (will be overridden by train_pareto.py)
+  cost_weight: 1.0
+  service_weight: 0.0
+  service_bonus_scale: 10.0  # Scale factor for service bonus
+
+agent:
+  hidden_dim: 128
+  critic_hidden_dim: 256
+  actor_lr: 0.0001
+  critic_lr: 0.0001
+  gamma: 0.99
+  gae_lambda: 0.95
+  eps_clip: 0.2
+  value_coef: 0.5
+  entropy_coef: 0.05
+
+training:
+  episodes: 5000  # Reduced for faster Pareto sweep
+  evaluate_every: 50
+  use_ga: true
+  ga_horizon: 5
+  n_rollout_threads: 8
+  n_eval_rollout_threads: 1
+  early_stop: true
+  n_warmup_evaluations: 10
+  n_no_improvement_thres: 15
+  
+  # Checkpoint saving
+  save_best: true
+  save_every: 500
+
+heuristic:
+  ga:
+    pop_size: 20  # Reduced from 30 for faster training
+    generations: 25  # Reduced from 40
+    mutation_rate: 0.1
+
+# Pareto experiment settings
+pareto:
+  weight_configs:
+    - name: "cost_focused"
+      cost_weight: 1.0
+      service_weight: 0.0
+    - name: "cost_leaning"
+      cost_weight: 0.8
+      service_weight: 0.2
+    - name: "balanced"
+      cost_weight: 0.5
+      service_weight: 0.5
+    - name: "service_leaning"
+      cost_weight: 0.2
+      service_weight: 0.8
+    - name: "service_focused"
+      cost_weight: 0.0
+      service_weight: 1.0
+  
+  seeds: [1, 2, 3]  # 3 seeds per configuration
+  output_dir: "results/pareto_serial"
+
+logging:
+  save_training_curves: true
+  save_episode_details: true
+  log_interval: 50

@@ -1,0 +1,77 @@
+# =============================================================================
+# PURE HAPPO BASELINE CONFIGURATION - SERIAL TOPOLOGY
+# =============================================================================
+# This configuration trains Pure HAPPO without GA refinement
+# Used as baseline comparison for the Hybrid HAPPO+GA approach
+#
+# Usage:
+#   python -m inventory_management_RL_Lot.train_pareto --config configs/baseline_pure_happo.yaml
+# =============================================================================
+
+env:
+  env_type: serial
+  level_num: 3
+  lead_time: 2
+  episode_len: 100
+  action_dim: 41
+  init_inventory: 20
+  init_outstanding: 10
+  holding_cost: [1.0, 1.0, 1.0]
+  backlog_cost: [5.0, 3.0, 2.0]
+  fixed_cost: 1.0
+  price_discount: false
+  eval_data_dir: "test_data/test_demand_merton"
+  
+  cost_weight: 1.0
+  service_weight: 0.0
+  service_bonus_scale: 10.0
+
+agent:
+  hidden_dim: 128
+  critic_hidden_dim: 256
+  actor_lr: 0.0001
+  critic_lr: 0.0001
+  gamma: 0.99
+  gae_lambda: 0.95
+  eps_clip: 0.2
+  value_coef: 0.5
+  entropy_coef: 0.05
+
+training:
+  episodes: 5000
+  evaluate_every: 50
+  use_ga: false  # KEY DIFFERENCE: No GA refinement
+  ga_horizon: 5
+  n_rollout_threads: 8
+  n_eval_rollout_threads: 1
+  early_stop: true
+  n_warmup_evaluations: 10
+  n_no_improvement_thres: 15
+  save_best: true
+  save_every: 500
+
+heuristic:
+  ga:
+    pop_size: 20
+    generations: 25
+    mutation_rate: 0.1
+
+pareto:
+  weight_configs:
+    - name: "pure_happo_cost"
+      cost_weight: 1.0
+      service_weight: 0.0
+    - name: "pure_happo_balanced"
+      cost_weight: 0.5
+      service_weight: 0.5
+    - name: "pure_happo_service"
+      cost_weight: 0.0
+      service_weight: 1.0
+  
+  seeds: [1, 2, 3]
+  output_dir: "results/baseline_pure_happo"
+
+logging:
+  save_training_curves: true
+  save_episode_details: true
+  log_interval: 50
