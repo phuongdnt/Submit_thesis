@@ -1,0 +1,11 @@
+======================================================================
+MODEL 1: HIERARCHICAL RULE SELECTION - RESULTS SUMMARY
+======================================================================
+Timestamp: 2026-01-29 02:05:31
+Topology: serial
+Episodes: 30
+
+Total Cost: 19550.7 ± 1593.9
+Fill Rate: 99.21%
+Cycle Service Level: 80.06%
+Bullwhip Effect: 1.572

@@ -1,20 +1,7 @@
 """
 happo_agent.py
 ===============
-
-Implementation of a simple multi–agent policy gradient algorithm inspired
-by Heterogeneous Agent Proximal Policy Optimisation (HAPPO).  This
-version supports a team of agents with individual policy networks and a
-centralised critic.  The training procedure collects full trajectories
-from the environment, computes returns and advantages using
-Generalised Advantage Estimation (GAE), and performs policy and value
-updates using the PPO objective with clipping.
-
-This implementation is intentionally lightweight: it avoids many
-optimisations present in mature RL libraries in order to remain
-accessible and easy to modify.  It should nonetheless serve as a
-reasonable baseline for experimentation in multi–agent supply chain
-control.
+FIXED VERSION: Added Learning Rate Scheduler (StepLR) to fix non-convergence.
 """
 
 from __future__ import annotations
@@ -24,6 +11,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.optim import Adam
+from torch.optim.lr_scheduler import StepLR 
 
 from agents.policy_networks import MLPActor
 from agents.centralized_critic import CentralizedCritic
@@ -58,6 +46,7 @@ class HAPPOAgent:
         self.value_coef = value_coef
         self.entropy_coef = entropy_coef
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        
         # Create actor networks for each agent
         self.actors: List[MLPActor] = []
         self.actor_optimisers: List[Adam] = []
@@ -65,24 +54,22 @@ class HAPPOAgent:
             actor = MLPActor(obs_dim, action_dim, hidden_dim).to(self.device)
             self.actors.append(actor)
             self.actor_optimisers.append(Adam(actor.parameters(), lr=actor_lr))
+            
         # Centralised critic
         state_dim = num_agents * obs_dim
         self.critic = CentralizedCritic(state_dim, critic_hidden_dim)
         self.critic_net = self.critic.net.to(self.device)
         self.critic_optimizer = Adam(self.critic_net.parameters(), lr=critic_lr)
-        # Experience buffer
+        
+        # --- FIX: Initialize LR Schedulers ---
+        # Reduce LR by 10% every 1000 update steps for better convergence
+        self.actor_schedulers = [StepLR(opt, step_size=1000, gamma=0.9) for opt in self.actor_optimisers]
+        self.critic_scheduler = StepLR(self.critic_optimizer, step_size=1000, gamma=0.9)
+        # -------------------------------------
+
         self.buffer = ReplayBuffer()
 
     def select_actions(self, obs_list: List[np.ndarray]) -> Tuple[List[int], List[torch.Tensor]]:
-        """Given a list of observations, sample actions and return log probs.
-
-        Args:
-            obs_list: List of per–agent observations (numpy arrays).
-
-        Returns:
-            actions: List of integer actions chosen by each agent.
-            log_probs: List of log probability tensors (one per agent).
-        """
         actions: List[int] = []
         log_probs: List[torch.Tensor] = []
         for i, obs in enumerate(obs_list):
@@ -101,20 +88,6 @@ class HAPPOAgent:
         next_obs: List[np.ndarray],
         done: bool,
     ) -> None:
-        """Store a transition in the replay buffer.
-
-        Args:
-            obs: List of observations for each agent at time t.
-            actions: List of actions taken by each agent.
-            log_probs: List of log probabilities under the old policy.
-            rewards: List of rewards received by each agent.
-            next_obs: List of observations at time t+1.
-            done: Episode termination flag (same for all agents).
-        """
-        # Detach log_probs to avoid retaining computation graph.  Convert each
-        # log probability to a Python float to ensure consistent tensor shapes
-        # when converting the replay buffer to tensors.  Storing NumPy 0‑d
-        # arrays here can lead to unsized objects that break torch.tensor().
         log_probs_detached = [float(lp.detach().cpu().item()) for lp in log_probs]
         transition = {
             "obs": obs,
@@ -127,19 +100,11 @@ class HAPPOAgent:
         self.buffer.add(transition)
 
     def update(self, batch_size: Optional[int] = None) -> None:
-        """Update policy and critic using the collected trajectories.
-
-        This method processes the entire buffer as a single batch.  It
-        computes returns and advantages via GAE and performs one gradient
-        update for each actor and the critic.
-        """
         if len(self.buffer) == 0:
             return
-        # Convert buffer to dict of lists
         data = self.buffer.as_dict()
         T = len(self.buffer)
-        # Prepare tensors
-        # obs: shape (T, num_agents, obs_dim)
+        
         obs_tensor = torch.tensor(data["obs"], dtype=torch.float32, device=self.device)
         actions_tensor = torch.tensor(data["actions"], dtype=torch.int64, device=self.device)
         old_log_probs_tensor = torch.tensor(data["log_probs"], dtype=torch.float32, device=self.device)
@@ -148,56 +113,61 @@ class HAPPOAgent:
         dones_tensor = torch.tensor(data["done"], dtype=torch.float32, device=self.device)
         if dones_tensor.dim() > 1:
             dones_tensor = dones_tensor.max(dim=1).values
-        # Flatten observations to global state
+            
         states = obs_tensor.view(T, -1)
         next_states = next_obs_tensor.view(T, -1)
-        # Compute state values
+        
         with torch.no_grad():
-            values = self.critic_net(states).squeeze(-1)  # (T,)
+            values = self.critic_net(states).squeeze(-1)
             next_values = self.critic_net(next_states).squeeze(-1)
-        # Compute global rewards as sum across agents
-        global_rewards = rewards_tensor.sum(dim=1)  # (T,)
-        # Compute GAE advantages and returns
+            
+        global_rewards = rewards_tensor.sum(dim=1)
         advantages = torch.zeros(T, device=self.device)
         returns = torch.zeros(T, device=self.device)
         gae = 0.0
+        
         for t in reversed(range(T)):
             mask = 1.0 - dones_tensor[t]
             delta = global_rewards[t] + self.gamma * next_values[t] * mask - values[t]
             gae = delta + self.gamma * self.gae_lambda * mask * gae
             advantages[t] = gae
             returns[t] = gae + values[t]
-        # Normalise advantages
+            
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
-        # Update critic (value function) using MSE loss
+        
+        # Update Critic
         self.critic_optimizer.zero_grad()
         value_preds = self.critic_net(states).squeeze(-1)
         critic_loss = torch.mean((returns - value_preds) ** 2)
         critic_loss.backward()
-        # Gradient clipping for training stability
         torch.nn.utils.clip_grad_norm_(self.critic_net.parameters(), max_norm=0.5)
         self.critic_optimizer.step()
-        # Update each actor independently
+        
+        # Update Actors
         for i in range(self.num_agents):
             actor = self.actors[i]
             actor_opt = self.actor_optimisers[i]
-            # Select data for agent i
+            
             obs_i = obs_tensor[:, i, :]
             actions_i = actions_tensor[:, i]
             old_log_probs_i = old_log_probs_tensor[:, i]
-            # Evaluate new log probs and entropy
+            
             new_log_probs, entropy = actor.evaluate_actions(obs_i, actions_i)
-            # Compute ratio
             ratio = torch.exp(new_log_probs - old_log_probs_i.to(self.device))
-            # Compute surrogate loss
+            
             surrogate1 = ratio * advantages
             surrogate2 = torch.clamp(ratio, 1.0 - self.eps_clip, 1.0 + self.eps_clip) * advantages
             actor_loss = -torch.mean(torch.min(surrogate1, surrogate2)) - self.entropy_coef * torch.mean(entropy)
-            # Update actor
+            
             actor_opt.zero_grad()
             actor_loss.backward()
-            # Gradient clipping for training stability
             torch.nn.utils.clip_grad_norm_(actor.parameters(), max_norm=0.5)
             actor_opt.step()
-        # Clear buffer after update
+            
+        # --- FIX: Step Schedulers ---
+        for sch in self.actor_schedulers:
+            sch.step()
+        self.critic_scheduler.step()
+        # ----------------------------
+        
         self.buffer.clear()

@@ -1,24 +1,3 @@
-"""
-base_env.py
-==============
-
-This module defines an abstract base class for inventory management environments.
-All environment classes in the project should inherit from :class:`BaseInventoryEnv`.
-It specifies the minimal interface expected by the rest of the system: resetting
-to an initial state, stepping through the environment with a list of actions,
-and reporting basic statistics.  Concrete subclasses implement the domain‐
-specific logic, such as serial or network supply chain dynamics.
-
-The base class also defines a few utility methods that subclasses can use
-for normalising observations and retrieving common state information.  It does
-not implement any environment logic itself.
-
-This design follows the interface conventions of popular RL frameworks
-(e.g. OpenAI Gym) but extends them for the multi–agent setting used in
-multi‐echelon inventory management.
-
-"""
-
 from __future__ import annotations
 
 import abc
@@ -114,3 +93,13 @@ class BaseInventoryEnv(abc.ABC):
         The base implementation returns an empty list.
         """
         return []
+
+    # --- FIX: ADDED CLOSE METHOD ---
+    def close(self):
+        """Override close method to clean up resources.
+        
+        This method is required by SubprocVecEnv to allow worker processes 
+        to shut down gracefully.
+        """
+        pass
+    # -------------------------------

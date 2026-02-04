@@ -293,7 +293,14 @@ class NetworkInventoryEnv(BaseInventoryEnv):
         processed_rewards = self._get_processed_rewards(rewards)
         done_flag = self.step_num >= self.episode_len
         done = [done_flag for _ in range(self.agent_num)]
-        info = [{} for _ in range(self.agent_num)]
+        
+        # Build info with demand and sales for multi-objective reward calculation
+        info = []
+        for i in range(self.agent_num):
+            info.append({
+                'demand': self.demand_history[i][-1] if self.demand_history[i] else 0,
+                'sales': self.fulfilled_history[i][-1] if self.fulfilled_history[i] else 0
+            })
         return next_obs, processed_rewards, done, info
 
     def get_eval_num(self) -> int:

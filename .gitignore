@@ -1,1 +1,22 @@
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Python cache
 __pycache__/
+*.py[cod]
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+
+# Logs & data
+*.log
+*.csv
+*.xlsx
+
+# Others
+.env
+.DS_Store

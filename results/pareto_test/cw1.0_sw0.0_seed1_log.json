@@ -1,0 +1,98 @@
+{
+  "experiment_name": "cw1.0_sw0.0_seed1",
+  "start_time": "2026-01-25T17:54:55.779451",
+  "config": {
+    "cost_weight": 1.0,
+    "service_weight": 0.0,
+    "seed": 1,
+    "config": {
+      "env": {
+        "env_type": "serial",
+        "level_num": 3,
+        "lead_time": 2,
+        "episode_len": 50,
+        "action_dim": 21,
+        "init_inventory": 15,
+        "init_outstanding": 5,
+        "holding_cost": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "backlog_cost": [
+          5.0,
+          3.0,
+          2.0
+        ],
+        "fixed_cost": 1.0,
+        "price_discount": false,
+        "eval_data_dir": "C:\\Tphuong\\final\\finalize_thesis\\test_data\\test_demand_merton",
+        "cost_weight": 1.0,
+        "service_weight": 0.0,
+        "service_bonus_scale": 2000
+      },
+      "agent": {
+        "hidden_dim": 64,
+        "critic_hidden_dim": 128,
+        "actor_lr": 0.001,
+        "critic_lr": 0.001,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "eps_clip": 0.2,
+        "value_coef": 0.5,
+        "entropy_coef": 0.05
+      },
+      "training": {
+        "episodes": 200,
+        "evaluate_every": 50,
+        "use_ga": true,
+        "ga_horizon": 3,
+        "n_rollout_threads": 4,
+        "n_eval_rollout_threads": 1,
+        "early_stop": false,
+        "n_warmup_evaluations": 2,
+        "n_no_improvement_thres": 5,
+        "save_best": true
+      },
+      "heuristic": {
+        "ga": {
+          "pop_size": 10,
+          "generations": 10,
+          "mutation_rate": 0.15
+        }
+      },
+      "pareto": {
+        "weight_configs": [
+          {
+            "name": "cost_focused",
+            "cost_weight": 1.0,
+            "service_weight": 0.0
+          },
+          {
+            "name": "balanced",
+            "cost_weight": 0.5,
+            "service_weight": 0.5
+          },
+          {
+            "name": "service_focused",
+            "cost_weight": 0.0,
+            "service_weight": 1.0
+          }
+        ],
+        "seeds": [
+          1
+        ],
+        "output_dir": "results/pareto_test"
+      }
+    }
+  },
+  "training_history": [
+    {
+      "episode": 50,
+      "timestamp": "2026-01-25T17:56:07.907419",
+      "reward": -33498.0
+    }
+  ],
+  "evaluation_results": [],
+  "pareto_points": []
+}

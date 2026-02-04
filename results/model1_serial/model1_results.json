@@ -1,0 +1,55 @@
+{
+  "model_name": "Model 1: Hierarchical Rule Selection",
+  "total_cost": 19550.666666666664,
+  "cost_std": 1593.872837531973,
+  "fill_rate_mean": 0.9920810377840392,
+  "service_level_mean": 0.8005555555555556,
+  "bullwhip_mean": 1.5723670861516652,
+  "cost_per_agent": [
+    4282.466666666666,
+    6941.933333333333,
+    8326.266666666666
+  ],
+  "fill_rate_per_agent": [
+    0.998106443119198,
+    0.9898136037340887,
+    0.9883230664988308
+  ],
+  "service_level_per_agent": [
+    0.8513333333333333,
+    0.7796666666666668,
+    0.7706666666666667
+  ],
+  "bullwhip_per_agent": [
+    1.5323474427154484,
+    1.5798966582279221,
+    1.6048571575116253
+  ],
+  "rule_statistics": {
+    "agent_0": {
+      "Fixed Order Quantity": 1556,
+      "Periodic Order Quantity": 352,
+      "Silver-Meal": 940,
+      "Least Unit Cost": 20,
+      "Part Period Balancing": 132,
+      "Economic Order Quantity": 0
+    },
+    "agent_1": {
+      "Fixed Order Quantity": 1371,
+      "Periodic Order Quantity": 205,
+      "Silver-Meal": 1013,
+      "Least Unit Cost": 344,
+      "Part Period Balancing": 67,
+      "Economic Order Quantity": 0
+    },
+    "agent_2": {
+      "Fixed Order Quantity": 1689,
+      "Periodic Order Quantity": 61,
+      "Silver-Meal": 940,
+      "Least Unit Cost": 276,
+      "Part Period Balancing": 34,
+      "Economic Order Quantity": 0
+    }
+  },
+  "topology": "serial"
+}
